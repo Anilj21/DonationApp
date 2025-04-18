@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import androidx.activity.ComponentActivity;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,7 +21,7 @@ import com.google.firebase.firestore.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DonorDashboardActivity extends AppCompatActivity {
+public class DonorDashboardActivity extends ComponentActivity {
 
     private RecyclerView recyclerView;
     private ItemAdapter itemAdapter;

@@ -3,12 +3,14 @@ package com.example.donation_app.view;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.*;
+
+import androidx.activity.ComponentActivity;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.donation_app.R;
 import com.example.donation_app.contract.AuthContract;
 import com.example.donation_app.presenter.AuthPresenter;
 
-public class RegisterActivity extends AppCompatActivity implements AuthContract.View {
+public class RegisterActivity extends ComponentActivity implements AuthContract.View {
 
     private EditText nameInput, emailInput, passwordInput;
     private RadioGroup roleGroup;
@@ -52,8 +54,9 @@ public class RegisterActivity extends AppCompatActivity implements AuthContract.
 
     @Override
     public void onRegisterFailure(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Registration Failed: " + message, Toast.LENGTH_SHORT).show();
     }
+
 
     @Override
     public void onLoginSuccess() {} // Not used here

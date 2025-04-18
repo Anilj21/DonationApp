@@ -2,6 +2,8 @@ package com.example.donation_app.view;
 
 import android.os.Bundle;
 import android.widget.*;
+
+import androidx.activity.ComponentActivity;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.donation_app.R;
@@ -11,7 +13,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.HashMap;
 import java.util.Map;
 
-public class UploadItemActivity extends AppCompatActivity {
+public class UploadItemActivity extends ComponentActivity {
 
     private EditText etName, etDescription;
     private Button btnUpload;

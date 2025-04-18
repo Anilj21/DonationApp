@@ -5,12 +5,14 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.activity.ComponentActivity;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.donation_app.R;
 import com.example.donation_app.contract.AuthContract;
 import com.example.donation_app.presenter.AuthPresenter;
 
-public class LoginActivity extends AppCompatActivity implements AuthContract.View {
+public class LoginActivity extends ComponentActivity implements AuthContract.View {
 
     private EditText emailInput, passwordInput;
     private AuthPresenter presenter;
@@ -19,6 +21,7 @@ public class LoginActivity extends AppCompatActivity implements AuthContract.Vie
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
 
         emailInput = findViewById(R.id.emailInput);
         passwordInput = findViewById(R.id.passwordInput);
@@ -34,8 +37,9 @@ public class LoginActivity extends AppCompatActivity implements AuthContract.Vie
             }
         });
 
-        findViewById(R.id.goToRegister).setOnClickListener(v ->
+        findViewById(R.id.goToRegister).setOnClickListener(v->
                 startActivity(new Intent(this, RegisterActivity.class)));
+
     }
 
     @Override
