@@ -1,59 +1,72 @@
 package com.example.donation_app.view;
 
 import android.os.Bundle;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
-import androidx.activity.ComponentActivity;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.donation_app.R;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class UploadItemActivity extends ComponentActivity {
+public class UploadItemActivity extends AppCompatActivity {
 
     private EditText etName, etDescription;
     private Button btnUpload;
-    private FirebaseFirestore db;
-    private FirebaseAuth auth;
+    private DatabaseReference itemsRef;
+    private String donorId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_upload_item);
 
-        etName = findViewById(R.id.etItemName);
+        // 1) find views
+        etName        = findViewById(R.id.etItemName);
         etDescription = findViewById(R.id.etItemDescription);
-        btnUpload = findViewById(R.id.btnSubmitItem);
+        btnUpload     = findViewById(R.id.btnSubmitItem);
 
-        db = FirebaseFirestore.getInstance();
-        auth = FirebaseAuth.getInstance();
+        // 2) get donorId from Intent
+        donorId = getIntent().getStringExtra("userId");
+        if (donorId == null || donorId.isEmpty()) {
+            Toast.makeText(this, "User ID missing. Please log in again.", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
+        // 3) get a reference to /items
+        itemsRef = FirebaseDatabase.getInstance()
+                .getReference("items");
+
+        // 4) set click listener
         btnUpload.setOnClickListener(v -> {
-            String name = etName.getText().toString().trim();
+            String name        = etName.getText().toString().trim();
             String description = etDescription.getText().toString().trim();
-            String donorId = auth.getCurrentUser().getUid();
 
-            if (!name.isEmpty() && !description.isEmpty()) {
-                Map<String, Object> item = new HashMap<>();
-                item.put("name", name);
-                item.put("description", description);
-                item.put("donorId", donorId);
-                item.put("imageUrl", ""); // optional, or implement later
-
-                db.collection("items")
-                        .add(item)
-                        .addOnSuccessListener(documentReference -> {
-                            Toast.makeText(this, "Item uploaded!", Toast.LENGTH_SHORT).show();
-                            finish();
-                        })
-                        .addOnFailureListener(e -> Toast.makeText(this, "Failed to upload item.", Toast.LENGTH_SHORT).show());
-            } else {
+            if (name.isEmpty() || description.isEmpty()) {
                 Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            // 5) generate a new push ID
+            String itemId = itemsRef.push().getKey();
+            if (itemId == null) {
+                Toast.makeText(this, "Error generating item ID", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // 6) build ItemHelper and write to DB
+            ItemHelper item = new ItemHelper(itemId, name, description, donorId);
+            itemsRef.child(itemId).setValue(item)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Item uploaded!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
         });
     }
 }

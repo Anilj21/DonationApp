@@ -1,35 +1,32 @@
 package com.example.donation_app.view;
 
-
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
-import androidx.activity.ComponentActivity;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.donation_app.R;
-import com.example.donation_app.model.Item;
 import com.example.donation_app.adapter.ItemAdapter;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.*;
+import com.example.donation_app.model.Item;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DonorDashboardActivity extends ComponentActivity {
+public class DonorDashboardActivity extends androidx.appcompat.app.AppCompatActivity {
 
     private RecyclerView recyclerView;
     private ItemAdapter itemAdapter;
     private List<Item> itemList;
     private FirebaseFirestore db;
-    private FirebaseAuth auth;
 
     private Button btnLogout, btnUploadItem;
+    private String userId; // from Intent
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,23 +43,30 @@ public class DonorDashboardActivity extends ComponentActivity {
         recyclerView.setAdapter(itemAdapter);
 
         db = FirebaseFirestore.getInstance();
-        auth = FirebaseAuth.getInstance();
+
+        userId = getIntent().getStringExtra("userId");
+        if (userId == null) {
+            Toast.makeText(this, "User ID missing. Please log in again.", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
 
         loadMyDonations();
 
         btnUploadItem.setOnClickListener(v -> {
-            startActivity(new Intent(this, UploadItemActivity.class));
+            Intent uploadIntent = new Intent(this, UploadItemActivity.class);
+            uploadIntent.putExtra("userId", userId); // pass userId if needed
+            startActivity(uploadIntent);
         });
 
         btnLogout.setOnClickListener(v -> {
-            auth.signOut();
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         });
     }
 
     private void loadMyDonations() {
-        String userId = auth.getCurrentUser().getUid();
         db.collection("items")
                 .whereEqualTo("donorId", userId)
                 .get()
@@ -73,6 +77,8 @@ public class DonorDashboardActivity extends ComponentActivity {
                         itemList.add(item);
                     }
                     itemAdapter.notifyDataSetChanged();
-                });
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Error loading donations: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 }

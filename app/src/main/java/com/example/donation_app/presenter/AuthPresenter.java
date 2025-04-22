@@ -1,10 +1,10 @@
 package com.example.donation_app.presenter;
 
+import android.util.Log;
 
 import com.example.donation_app.contract.AuthContract;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,66 +12,67 @@ import java.util.Map;
 public class AuthPresenter implements AuthContract.Presenter {
 
     private final AuthContract.View view;
-    private final FirebaseAuth auth;
-    private final FirebaseFirestore db;
+    private final DatabaseReference db;
 
     public AuthPresenter(AuthContract.View view) {
         this.view = view;
-        this.auth = FirebaseAuth.getInstance();
-        this.db = FirebaseFirestore.getInstance();
+        this.db = FirebaseDatabase.getInstance().getReference(); // Get the Realtime Database reference
     }
 
-    public AuthPresenter(AuthContract.View view, FirebaseAuth auth, FirebaseFirestore db) {
+    public AuthPresenter(AuthContract.View view, DatabaseReference db) {
         this.view = view;
-        this.auth = auth;
         this.db = db;
     }
 
     @Override
     public void login(String email, String password) {
-        auth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(task -> {
+        // For Realtime Database, you could store users by email as keys and passwords as values,
+        // but it's not recommended to store passwords in plaintext.
+        // Here, we'll demonstrate a simple lookup. In production, consider encrypting passwords.
+        db.child("users").orderByChild("email").equalTo(email)
+                .get().addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        view.onLoginSuccess();
-                    } else {
-                        view.onLoginFailure("Login failed. Please check credentials.");
-                    }
-                });
-    }
-    @Override
-    public void register(String name, String email, String password, String role, boolean isVolunteer) {
-        auth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        FirebaseUser firebaseUser = auth.getCurrentUser();
-                        if (firebaseUser != null) {
-                            String userId = firebaseUser.getUid();
-
-                            Map<String, Object> user = new HashMap<>();
-                            user.put("id", userId);
-                            user.put("name", name);
-                            user.put("email", email);
-                            user.put("role", role); // "donor" or "ngo"
-                            user.put("isVolunteer", isVolunteer);
-
-                            db.collection("users").document(userId)
-                                    .set(user)
-                                    .addOnSuccessListener(unused -> {
-                                        view.onRegisterSuccess();
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        view.onRegisterFailure("Firestore save failed: " + e.getMessage());
-                                    });
+                        if (task.getResult().exists()) {
+                            // Check if password matches
+                            String storedPassword = task.getResult().child("password").getValue(String.class);
+                            if (storedPassword != null && storedPassword.equals(password)) {
+                                view.onLoginSuccess();
+                            } else {
+                                view.onLoginFailure("Incorrect password.");
+                            }
                         } else {
-                            view.onRegisterFailure("User creation failed: FirebaseUser is null.");
+                            view.onLoginFailure("User not found.");
                         }
                     } else {
-                        String error = task.getException() != null ? task.getException().getMessage() : "Unknown authentication error.";
-                        view.onRegisterFailure("Authentication failed: " + error);
+                        view.onLoginFailure("Login failed: " + task.getException().getMessage());
                     }
                 });
     }
 
+    @Override
+    public void register(String name, String email, String password, String role, boolean isVolunteer) {
+        // Using a unique user ID based on email hash or timestamp or a simple incremented counter for simplicity
+        String userId = db.push().getKey(); // Generate a unique user ID
+        if (userId != null) {
+            Map<String, Object> user = new HashMap<>();
+            user.put("id", userId);
+            user.put("name", name);
+            user.put("email", email);
+            user.put("password", password); // Store password (again, consider hashing this in real-world scenarios)
+            user.put("role", role); // "donor" or "ngo"
+            user.put("isVolunteer", isVolunteer);
 
+            // Save user data under the generated userId
+            db.child("users").child(userId).setValue(user)
+                    .addOnSuccessListener(unused -> {
+                        view.onRegisterSuccess();
+                        Log.d("AuthPresenter", "Register success callback triggered");
+                    })
+                    .addOnFailureListener(e -> {
+                        view.onRegisterFailure("Realtime DB save failed: " + e.getMessage());
+                    });
+        } else {
+            view.onRegisterFailure("Failed to generate user ID.");
+        }
+    }
 }
-
