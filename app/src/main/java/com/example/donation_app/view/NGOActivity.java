@@ -1,6 +1,8 @@
 package com.example.donation_app.view;
 
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -19,53 +21,51 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+public class NGOActivity extends AppCompatActivity {
 
-public class NgoDashboardActivity extends AppCompatActivity {
-
+    private RecyclerView recyclerView;
+    private ProgressBar progressBar;
     private ItemAdapter itemAdapter;
-    private final List<Item> itemList = new ArrayList<>();
-    private SwipeRefreshLayout swipeRefreshLayout;
+    private List<Item> itemList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_ngo_dashboard);
+        setContentView(R.layout.activity_ngo); // Ensure this layout exists
 
-        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
-        RecyclerView recyclerView = findViewById(R.id.recyclerViewNgoItems);
+        recyclerView = findViewById(R.id.recyclerViewItems); // Add this ID in your layout XML
+        progressBar = findViewById(R.id.progressBar);         // Add this ID in your layout XML
+        itemList = new ArrayList<>();
+        itemAdapter = new ItemAdapter(this, itemList);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        itemAdapter = new ItemAdapter(this, itemList);
         recyclerView.setAdapter(itemAdapter);
 
-        loadAllItems();
-
-        swipeRefreshLayout.setOnRefreshListener(this::loadAllItems);
+        loadDonationItems();
     }
 
-    private void loadAllItems() {
-        swipeRefreshLayout.setRefreshing(true);
+    private void loadDonationItems() {
+        progressBar.setVisibility(View.VISIBLE);
 
         FirebaseDatabase.getInstance().getReference("items")
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         itemList.clear();
-                        for (DataSnapshot snap : snapshot.getChildren()) {
-                            Item item = snap.getValue(Item.class);
+                        for (DataSnapshot itemSnapshot : snapshot.getChildren()) {
+                            Item item = itemSnapshot.getValue(Item.class);
                             if (item != null) {
                                 itemList.add(item);
                             }
                         }
                         itemAdapter.notifyDataSetChanged();
-                        swipeRefreshLayout.setRefreshing(false);
+                        progressBar.setVisibility(View.GONE);
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(NgoDashboardActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-                        swipeRefreshLayout.setRefreshing(false);
+                        progressBar.setVisibility(View.GONE);
+                        Toast.makeText(NGOActivity.this, "Failed to load items.", Toast.LENGTH_SHORT).show();
                     }
                 });
     }

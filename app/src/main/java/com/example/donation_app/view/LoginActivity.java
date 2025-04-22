@@ -92,8 +92,8 @@ public class LoginActivity extends AppCompatActivity {
                             // Navigate based on role
                             Intent intent;
                             if ("ngo".equalsIgnoreCase(role)) {
-                                intent = new Intent(LoginActivity.this, NgoDashboardActivity.class);
-                            } else if ("donar".equalsIgnoreCase(role)) {
+                                intent = new Intent(LoginActivity.this, NGOActivity.class);
+                            } else if ("donor".equalsIgnoreCase(role)) {
                                 intent = new Intent(LoginActivity.this, DonorDashboardActivity.class);
                             } else {
                                 Toast.makeText(LoginActivity.this, "Unknown role: " + role, Toast.LENGTH_SHORT).show();

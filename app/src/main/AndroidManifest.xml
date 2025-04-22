@@ -25,6 +25,7 @@
         <!-- Other Activities -->
         <activity android:name=".view.RegisterActivity" />
         <activity android:name=".view.DonorDashboardActivity" />
+        <activity android:name=".view.NGOActivity" />
         <activity android:name=".view.UploadItemActivity" />
 
         <!-- Add NGO dashboard or volunteer activities if created -->
