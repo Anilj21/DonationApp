@@ -19,6 +19,14 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp" />
 
+    <EditText
+        android:id="@+id/etItemQuantity"
+        android:hint="Quantity"
+        android:inputType="number"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
     <Button
         android:id="@+id/btnSubmitItem"
         android:text="Upload Item"
@@ -26,5 +34,5 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:backgroundTint="#4CAF50"
-        android:textColor="#fff"/>
+        android:textColor="#fff" />
 </LinearLayout>
