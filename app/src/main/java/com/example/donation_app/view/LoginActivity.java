@@ -71,7 +71,6 @@ public class LoginActivity extends AppCompatActivity {
             return true;
         }
     }
-
     private void checkUser() {
         String userEmail = emailInput.getText().toString().trim();
         String userPassword = passwordInput.getText().toString().trim();
@@ -86,12 +85,22 @@ public class LoginActivity extends AppCompatActivity {
                     for (DataSnapshot userSnapshot : snapshot.getChildren()) {
                         String passwordFromDB = userSnapshot.child("password").getValue(String.class);
                         String role = userSnapshot.child("role").getValue(String.class);
-                        if (Objects.equals(passwordFromDB, userPassword)) {
-                            // Login success
-                            String usernameKey = userSnapshot.getKey(); // e.g., "anil"
+                        String name = userSnapshot.child("name").getValue(String.class); // in case you want to use it later
+                        String userId = userSnapshot.getKey(); // key from db
 
-                            Intent intent = new Intent(LoginActivity.this, DonorDashboardActivity.class);
-                            intent.putExtra("userId", usernameKey); // pass the ID
+                        if (Objects.equals(passwordFromDB, userPassword)) {
+                            // Navigate based on role
+                            Intent intent;
+                            if ("ngo".equalsIgnoreCase(role)) {
+                                intent = new Intent(LoginActivity.this, NgoDashboardActivity.class);
+                            } else if ("donar".equalsIgnoreCase(role)) {
+                                intent = new Intent(LoginActivity.this, DonorDashboardActivity.class);
+                            } else {
+                                Toast.makeText(LoginActivity.this, "Unknown role: " + role, Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            intent.putExtra("userId", userId); // pass user ID
                             startActivity(intent);
                             finish();
                             return;
@@ -113,4 +122,5 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
+
 }
